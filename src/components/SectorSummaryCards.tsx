@@ -30,7 +30,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
   };
 
   return (
-    <div style={{
+    <div className="sector-cards-grid" style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
       gap: '16px',

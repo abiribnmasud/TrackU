@@ -104,9 +104,9 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
             No items tracked in {title}. Click <strong>Manage Items</strong> to add one!
           </div>
         ) : (
-          <div style={{
+          <div className="checkin-items-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '16px'
           }}>
             {sectorItems.map((item) => {

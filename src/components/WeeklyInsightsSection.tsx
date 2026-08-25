@@ -82,7 +82,7 @@ export const WeeklyInsightsSection: React.FC<WeeklyInsightsSectionProps> = ({
       </div>
 
       {/* Grid of Insight Metric Cards */}
-      <div style={{
+      <div className="insights-metrics-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
         gap: '16px',

@@ -26,6 +26,7 @@ import { ProfilePage } from './components/ProfilePage';
 export function App() {
   const [user, setUser] = useState<UserSession | null>(getCurrentUser());
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [items, setItems] = useState<TrackedItem[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -126,21 +127,23 @@ export function App() {
   const weeklyInsights = calculateWeeklyInsights(items, logs, currentDate);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', gap: '24px', maxWidth: '1400px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="app-container">
       
-      {/* Left Sidebar Navigation */}
+      {/* Sidebar Navigation (Desktop & Mobile Drawer) */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         user={user}
         onLogout={handleLogout}
         consistencyScore={weeklyInsights.overallConsistencyScore}
+        isOpenMobile={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main View Area */}
       <main style={{ flex: 1, minWidth: 0 }}>
         
-        {/* Top Header */}
+        {/* Top Header with Mobile Hamburger Menu Toggle */}
         <Header
           currentDate={currentDate}
           onDateChange={setCurrentDate}
@@ -148,6 +151,7 @@ export function App() {
           onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
           onDataImported={refreshData}
           consistencyScore={weeklyInsights.overallConsistencyScore}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />
 
         {/* TAB 1: OVERVIEW */}

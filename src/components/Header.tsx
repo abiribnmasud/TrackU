@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Calendar, Download, Upload, PlusCircle, Activity, History } from 'lucide-react';
+import { Calendar, Download, Upload, PlusCircle, Activity, History, Menu } from 'lucide-react';
 import { exportDataJSON, importDataJSON } from '../utils/storage';
 
 interface HeaderProps {
@@ -9,6 +9,7 @@ interface HeaderProps {
   onOpenHistoryModal: () => void;
   onDataImported: () => void;
   consistencyScore: number;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenConfigModal,
   onOpenHistoryModal,
   onDataImported,
-  consistencyScore
+  consistencyScore,
+  onToggleMobileMenu
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,45 +62,58 @@ export const Header: React.FC<HeaderProps> = ({
   const isToday = currentDate === new Date().toISOString().split('T')[0];
 
   return (
-    <header className="glass-panel" style={{ padding: '16px 24px', marginBottom: '24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+    <header className="glass-panel" style={{ padding: '14px 20px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         
-        {/* Brand logo & Title */}
+        {/* Mobile Hamburger Button + Brand logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #10b981 0%, #8b5cf6 50%, #f59e0b 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
-          }}>
-            <Activity size={24} color="#ffffff" />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
-              TrackU <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-muted)' }}>| 3-Sector Tracker</span>
-            </h1>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-              Fitness • Growth • Financial Consistency
-            </p>
+          {onToggleMobileMenu && (
+            <button
+              onClick={onToggleMobileMenu}
+              className="btn-secondary hamburger-btn"
+              style={{ padding: '8px', minHeight: '40px' }}
+              title="Open Navigation Menu"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #10b981 0%, #8b5cf6 50%, #f59e0b 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
+            }}>
+              <Activity size={22} color="#ffffff" />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
+                TrackU
+              </h1>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                3-Sector Consistency
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Date Selector & Consistency Pill */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
             background: 'rgba(15, 23, 42, 0.6)',
-            padding: '6px 12px',
+            padding: '4px 10px',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)'
           }}>
-            <Calendar size={16} color="var(--text-muted)" />
+            <Calendar size={15} color="var(--text-muted)" />
             <input
               type="date"
               value={currentDate}
@@ -107,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
                 background: 'transparent',
                 border: 'none',
                 color: 'var(--text-main)',
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 outline: 'none',
                 fontFamily: 'inherit',
                 cursor: 'pointer'
@@ -117,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={() => onDateChange(new Date().toISOString().split('T')[0])}
                 className="btn-secondary"
-                style={{ padding: '2px 8px', fontSize: '0.72rem' }}
+                style={{ padding: '2px 6px', fontSize: '0.7rem', minHeight: '26px' }}
               >
                 Today
               </button>
@@ -130,21 +145,21 @@ export const Header: React.FC<HeaderProps> = ({
             gap: '6px',
             background: 'rgba(139, 92, 246, 0.12)',
             border: '1px solid rgba(139, 92, 246, 0.3)',
-            padding: '6px 12px',
+            padding: '4px 10px',
             borderRadius: 'var(--radius-full)',
             color: '#a78bfa',
-            fontSize: '0.82rem',
-            fontWeight: 600
+            fontSize: '0.78rem',
+            fontWeight: 700
           }}>
             <span>Score: {consistencyScore}%</span>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button onClick={onOpenHistoryModal} className="btn-secondary" title="View History Logs">
             <History size={16} />
-            <span>Logs</span>
+            <span style={{ fontSize: '0.8rem' }}>Logs</span>
           </button>
 
           <button onClick={handleExport} className="btn-secondary" title="Export Backup JSON">
@@ -163,8 +178,8 @@ export const Header: React.FC<HeaderProps> = ({
           />
 
           <button onClick={onOpenConfigModal} className="btn-primary">
-            <PlusCircle size={18} />
-            <span>Manage Items</span>
+            <PlusCircle size={16} />
+            <span style={{ fontSize: '0.85rem' }}>Items</span>
           </button>
         </div>
 
