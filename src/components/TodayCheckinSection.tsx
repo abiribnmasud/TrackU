@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { Dumbbell, Sprout, DollarSign, Check, X, Edit3, Trash2, MessageSquare } from 'lucide-react';
+import { Dumbbell, Sprout, DollarSign, Check, X, Edit3, Trash2, MessageSquare, Save } from 'lucide-react';
 import type { TrackedItem, LogEntry, SectorType } from '../types/tracker';
 
 interface TodayCheckinSectionProps {
@@ -10,6 +10,7 @@ interface TodayCheckinSectionProps {
   onSaveLog: (itemId: string, value: number | boolean | string, remark?: string) => void;
   onEditItem: (item: TrackedItem) => void;
   onDeleteItem: (itemId: string) => void;
+  forcedSectorFilter?: SectorType | 'all';
 }
 
 export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
@@ -18,9 +19,19 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
   currentDate,
   onSaveLog,
   onEditItem,
-  onDeleteItem
+  onDeleteItem,
+  forcedSectorFilter
 }) => {
-  const [activeSectorFilter, setActiveSectorFilter] = useState<SectorType | 'all'>('all');
+  const [activeSectorFilter, setActiveSectorFilter] = useState<SectorType | 'all'>(
+    forcedSectorFilter || 'all'
+  );
+
+  // Local draft states for inputs per item to support explicit Update button & input reset
+  const [draftValues, setDraftValues] = useState<Record<string, any>>({});
+  const [draftRemarks, setDraftRemarks] = useState<Record<string, string>>({});
+  const [updatedToastItemId, setUpdatedToastItemId] = useState<string | null>(null);
+
+  const effectiveFilter = forcedSectorFilter || activeSectorFilter;
 
   const logsMap = new Map<string, LogEntry>();
   logs.filter((l) => l.date === currentDate).forEach((l) => {
@@ -35,9 +46,43 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
     });
   };
 
+  const handleUpdateItem = (item: TrackedItem) => {
+    const currentLog = logsMap.get(item.id);
+    const draftVal = draftValues[item.id];
+    const draftRem = draftRemarks[item.id];
+
+    // Determine value to submit: draftVal if provided, else keep current logged value
+    const finalValue = draftVal !== undefined ? draftVal : (currentLog ? currentLog.value : 0);
+    const finalRemark = draftRem !== undefined ? draftRem : (currentLog?.remark || '');
+
+    onSaveLog(item.id, finalValue, finalRemark);
+
+    // Fire celebration confetti if 100% completed
+    if ((typeof finalValue === 'number' && finalValue >= 100) || finalValue === true) {
+      fireConfetti();
+    }
+
+    // Toast feedback
+    setUpdatedToastItemId(item.id);
+    setTimeout(() => setUpdatedToastItemId(null), 2500);
+
+    // RESET draft input fields for fresh input
+    setDraftValues((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
+
+    setDraftRemarks((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
+  };
+
   const renderSectorSection = (sector: SectorType, title: string, Icon: any) => {
     const sectorItems = items.filter((i) => i.sector === sector);
-    if (sectorItems.length === 0 && activeSectorFilter !== 'all') return null;
+    if (sectorItems.length === 0 && effectiveFilter !== 'all') return null;
 
     return (
       <div key={sector} style={{ marginBottom: '28px' }}>
@@ -61,27 +106,21 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
             gap: '16px'
           }}>
             {sectorItems.map((item) => {
               const currentLog = logsMap.get(item.id);
-              const currentValue = currentLog ? currentLog.value : '';
-              const currentRemark = currentLog?.remark || '';
+              const loggedVal = currentLog ? currentLog.value : 0;
+              const loggedRemark = currentLog?.remark || '';
 
-              // For percentage input type: convert current value to number (0-100)
-              const pctVal = typeof currentValue === 'number' ? currentValue : 0;
+              // Active input values: draft if user is typing, else blank/reset ready for new input
+              const hasDraft = draftValues[item.id] !== undefined;
+              const displayVal = hasDraft ? draftValues[item.id] : '';
+              const displayRemark = draftRemarks[item.id] !== undefined ? draftRemarks[item.id] : '';
 
-              const handleValueChange = (val: number | boolean | string) => {
-                onSaveLog(item.id, val, currentRemark);
-                if ((typeof val === 'number' && val >= 100) || val === true) {
-                  fireConfetti();
-                }
-              };
-
-              const handleRemarkChange = (rem: string) => {
-                onSaveLog(item.id, currentValue, rem);
-              };
+              const pctVal = typeof loggedVal === 'number' ? loggedVal : 0;
+              const isJustUpdated = updatedToastItemId === item.id;
 
               return (
                 <div
@@ -93,7 +132,10 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     gap: '14px',
-                    position: 'relative'
+                    position: 'relative',
+                    borderColor: isJustUpdated ? '#10b981' : undefined,
+                    boxShadow: isJustUpdated ? '0 0 15px rgba(16, 185, 129, 0.3)' : undefined,
+                    transition: 'var(--transition-smooth)'
                   }}
                 >
                   {/* Item Header */}
@@ -128,7 +170,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                       </div>
                     </div>
 
-                    {/* Quick Edit & Delete Actions */}
+                    {/* Actions */}
                     <div style={{ display: 'flex', gap: '4px' }}>
                       <button
                         onClick={() => onEditItem(item)}
@@ -138,8 +180,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                           color: 'var(--text-dim)',
                           cursor: 'pointer',
                           padding: '4px',
-                          borderRadius: '4px',
-                          transition: 'var(--transition-fast)'
+                          borderRadius: '4px'
                         }}
                         title="Edit Item"
                       >
@@ -153,8 +194,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                           color: 'rgba(239, 68, 68, 0.7)',
                           cursor: 'pointer',
                           padding: '4px',
-                          borderRadius: '4px',
-                          transition: 'var(--transition-fast)'
+                          borderRadius: '4px'
                         }}
                         title="Delete Item"
                       >
@@ -170,20 +210,22 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     {item.inputType === 'percentage' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Progress:</span>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            Current: <strong>{pctVal}%</strong>
+                          </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '110px' }}>
                             <input
                               type="number"
                               min="0"
                               max="100"
-                              value={typeof currentValue === 'number' ? currentValue : ''}
+                              value={displayVal}
                               onChange={(e) => {
                                 const num = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                                handleValueChange(num);
+                                setDraftValues((prev) => ({ ...prev, [item.id]: num }));
                               }}
                               className="input-field"
                               style={{ padding: '4px 8px', textAlign: 'center', fontWeight: 700 }}
-                              placeholder="0"
+                              placeholder="New %"
                             />
                             <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>%</span>
                           </div>
@@ -202,8 +244,10 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                           {[25, 50, 75, 100].map((preset) => (
                             <button
                               key={preset}
-                              onClick={() => handleValueChange(preset)}
-                              className={`preset-btn ${pctVal === preset ? 'active' : ''}`}
+                              onClick={() => {
+                                setDraftValues((prev) => ({ ...prev, [item.id]: preset }));
+                              }}
+                              className={`preset-btn ${displayVal === preset || pctVal === preset ? 'active' : ''}`}
                               style={{ flex: 1 }}
                             >
                               {preset}%
@@ -215,17 +259,17 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
 
                     {/* NUMBER INPUT */}
                     {item.inputType === 'number' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                          Amount logged:
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                          Currently logged: <strong>{loggedVal} {item.unit || ''}</strong>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <input
                             type="number"
-                            value={typeof currentValue === 'number' ? currentValue : ''}
-                            onChange={(e) => handleValueChange(Number(e.target.value) || 0)}
+                            value={displayVal}
+                            onChange={(e) => setDraftValues((prev) => ({ ...prev, [item.id]: Number(e.target.value) || 0 }))}
                             className="input-field"
-                            placeholder="Enter amount..."
+                            placeholder="Enter amount to update..."
                           />
                           {item.unit && (
                             <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -239,23 +283,25 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     {/* BOOLEAN INPUT */}
                     {item.inputType === 'boolean' && (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>Status:</span>
+                        <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                          Status: <strong>{loggedVal === true ? 'Completed' : 'Pending'}</strong>
+                        </span>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
-                            onClick={() => handleValueChange(true)}
-                            className={currentValue === true ? 'btn-primary' : 'btn-secondary'}
+                            onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: true }))}
+                            className={(hasDraft ? displayVal === true : loggedVal === true) ? 'btn-primary' : 'btn-secondary'}
                             style={{
                               padding: '6px 14px',
-                              background: currentValue === true ? 'rgba(16, 185, 129, 0.25)' : undefined,
-                              borderColor: currentValue === true ? '#10b981' : undefined,
-                              color: currentValue === true ? '#34d399' : undefined
+                              background: (hasDraft ? displayVal === true : loggedVal === true) ? 'rgba(16, 185, 129, 0.25)' : undefined,
+                              borderColor: (hasDraft ? displayVal === true : loggedVal === true) ? '#10b981' : undefined,
+                              color: (hasDraft ? displayVal === true : loggedVal === true) ? '#34d399' : undefined
                             }}
                           >
                             <Check size={14} /> Completed
                           </button>
                           <button
-                            onClick={() => handleValueChange(false)}
-                            className={currentValue === false ? 'btn-danger' : 'btn-secondary'}
+                            onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: false }))}
+                            className={(hasDraft ? displayVal === false : loggedVal === false) ? 'btn-danger' : 'btn-secondary'}
                             style={{ padding: '6px 14px' }}
                           >
                             <X size={14} /> Pending
@@ -269,10 +315,10 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                       <div>
                         <input
                           type="text"
-                          value={String(currentValue)}
-                          onChange={(e) => handleValueChange(e.target.value)}
+                          value={displayVal}
+                          onChange={(e) => setDraftValues((prev) => ({ ...prev, [item.id]: e.target.value }))}
                           className="input-field"
-                          placeholder="Type log entry or note..."
+                          placeholder={loggedVal ? `Current: "${loggedVal}" - type to update` : "Type log entry..."}
                         />
                       </div>
                     )}
@@ -283,19 +329,33 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                           <MessageSquare size={13} color="var(--text-dim)" />
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 500 }}>
-                            Optional Remarks:
+                            Remarks {loggedRemark ? `(Current: "${loggedRemark}")` : ''}:
                           </span>
                         </div>
                         <input
                           type="text"
-                          value={currentRemark}
-                          onChange={(e) => handleRemarkChange(e.target.value)}
+                          value={displayRemark}
+                          onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
                           className="input-field"
                           style={{ fontSize: '0.82rem', padding: '6px 10px' }}
-                          placeholder="Add notes, e.g. feeling energetic, expensive ride..."
+                          placeholder="Add new notes or remark..."
                         />
                       </div>
                     )}
+
+                    {/* EXPLICIT UPDATE BUTTON */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+                      <span style={{ fontSize: '0.72rem', color: isJustUpdated ? '#34d399' : 'var(--text-dim)', fontWeight: 600 }}>
+                        {isJustUpdated ? '✓ Updated & Reset!' : 'Ready for input'}
+                      </span>
+                      <button
+                        onClick={() => handleUpdateItem(item)}
+                        className="btn-primary"
+                        style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                      >
+                        <Save size={14} /> Update Value
+                      </button>
+                    </div>
 
                   </div>
                 </div>
@@ -309,43 +369,45 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
 
   return (
     <section>
-      {/* Sector Filter Tabs */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Today's Check-in & Trackers</h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Log exact values, percentages, expenses, and notes for {currentDate}.
-          </p>
-        </div>
+      {/* Sector Filter Tabs (Only shown if forcedSectorFilter is 'all' or undefined) */}
+      {!forcedSectorFilter && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Today's Check-in & Trackers</h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Log exact values, percentages, expenses, and notes for {currentDate}.
+            </p>
+          </div>
 
-        <div style={{ display: 'flex', gap: '6px', background: 'rgba(15, 23, 42, 0.6)', padding: '4px', borderRadius: 'var(--radius-md)' }}>
-          {(['all', 'fitness', 'growth', 'finance'] as const).map((sec) => (
-            <button
-              key={sec}
-              onClick={() => setActiveSectorFilter(sec)}
-              className={`btn-secondary ${activeSectorFilter === sec ? 'active' : ''}`}
-              style={{
-                padding: '6px 12px',
-                fontSize: '0.78rem',
-                textTransform: 'capitalize',
-                background: activeSectorFilter === sec ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                borderColor: activeSectorFilter === sec ? 'var(--border-bright)' : 'transparent'
-              }}
-            >
-              {sec}
-            </button>
-          ))}
+          <div style={{ display: 'flex', gap: '6px', background: 'rgba(15, 23, 42, 0.6)', padding: '4px', borderRadius: 'var(--radius-md)' }}>
+            {(['all', 'fitness', 'growth', 'finance'] as const).map((sec) => (
+              <button
+                key={sec}
+                onClick={() => setActiveSectorFilter(sec)}
+                className={`btn-secondary ${effectiveFilter === sec ? 'active' : ''}`}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '0.78rem',
+                  textTransform: 'capitalize',
+                  background: effectiveFilter === sec ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                  borderColor: effectiveFilter === sec ? 'var(--border-bright)' : 'transparent'
+                }}
+              >
+                {sec}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Render Sector Groups */}
-      {(activeSectorFilter === 'all' || activeSectorFilter === 'fitness') &&
+      {(effectiveFilter === 'all' || effectiveFilter === 'fitness') &&
         renderSectorSection('fitness', 'Fitness Tracking', Dumbbell)}
 
-      {(activeSectorFilter === 'all' || activeSectorFilter === 'growth') &&
+      {(effectiveFilter === 'all' || effectiveFilter === 'growth') &&
         renderSectorSection('growth', 'Growth Tracking', Sprout)}
 
-      {(activeSectorFilter === 'all' || activeSectorFilter === 'finance') &&
+      {(effectiveFilter === 'all' || effectiveFilter === 'finance') &&
         renderSectorSection('finance', 'Financial Tracking', DollarSign)}
     </section>
   );

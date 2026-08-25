@@ -10,14 +10,23 @@ import {
   syncWithSupabaseCloud
 } from './utils/storage';
 import { getSectorSummaries, calculateWeeklyInsights, formatDateString } from './utils/analytics';
+import { getCurrentUser, logoutUser } from './utils/auth';
+import type { UserSession } from './utils/auth';
+import { LoginPage } from './components/LoginPage';
+import { Sidebar } from './components/Sidebar';
+import type { NavTab } from './components/Sidebar';
 import { Header } from './components/Header';
 import { SectorSummaryCards } from './components/SectorSummaryCards';
 import { TodayCheckinSection } from './components/TodayCheckinSection';
 import { WeeklyInsightsSection } from './components/WeeklyInsightsSection';
 import { ItemConfigModal } from './components/ItemConfigModal';
 import { HistoryLogModal } from './components/HistoryLogModal';
+import { ProfilePage } from './components/ProfilePage';
 
 export function App() {
+  const [user, setUser] = useState<UserSession | null>(getCurrentUser());
+  const [activeTab, setActiveTab] = useState<NavTab>('overview');
+
   const [items, setItems] = useState<TrackedItem[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [currentDate, setCurrentDate] = useState<string>(formatDateString(new Date()));
@@ -27,7 +36,7 @@ export function App() {
   const [itemToEdit, setItemToEdit] = useState<TrackedItem | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-  // Load initial items & logs from local storage & sync cloud
+  // Load items & logs from storage & sync Supabase cloud
   const refreshData = () => {
     const loadedItems = getStoredItems();
     const loadedLogs = getStoredLogs();
@@ -44,6 +53,16 @@ export function App() {
       }
     });
   }, []);
+
+  const handleLogout = () => {
+    logoutUser();
+    setUser(null);
+  };
+
+  // If user is not logged in, render the Login Screen overlay
+  if (!user) {
+    return <LoginPage onLoginSuccess={(session) => setUser(session)} />;
+  }
 
   // Save or update log entry
   const handleSaveLog = (itemId: string, value: number | boolean | string, remark?: string) => {
@@ -80,7 +99,7 @@ export function App() {
     setItemToEdit(null);
   };
 
-  // Delete tracked item (works for both pre-configured defaults and custom items)
+  // Delete tracked item
   const handleDeleteItem = (itemId: string) => {
     deleteTrackedItem(itemId);
     refreshData();
@@ -107,41 +126,119 @@ export function App() {
   const weeklyInsights = calculateWeeklyInsights(items, logs, currentDate);
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', gap: '24px', maxWidth: '1400px', margin: '0 auto', padding: '24px 16px' }}>
       
-      {/* Top Header */}
-      <Header
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onOpenConfigModal={handleOpenCreateItem}
-        onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-        onDataImported={refreshData}
+      {/* Left Sidebar Navigation */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        user={user}
+        onLogout={handleLogout}
         consistencyScore={weeklyInsights.overallConsistencyScore}
       />
 
-      {/* Top Summary Cards per Sector */}
-      <SectorSummaryCards
-        summaries={sectorSummaries}
-        insights={weeklyInsights}
-      />
+      {/* Main View Area */}
+      <main style={{ flex: 1, minWidth: 0 }}>
+        
+        {/* Top Header */}
+        <Header
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          onOpenConfigModal={handleOpenCreateItem}
+          onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+          onDataImported={refreshData}
+          consistencyScore={weeklyInsights.overallConsistencyScore}
+        />
 
-      {/* Main Today Check-in Trackers Section */}
-      <TodayCheckinSection
-        items={items}
-        logs={logs}
-        currentDate={currentDate}
-        onSaveLog={handleSaveLog}
-        onEditItem={handleOpenEditItem}
-        onDeleteItem={handleDeleteItem}
-      />
+        {/* TAB 1: OVERVIEW */}
+        {activeTab === 'overview' && (
+          <>
+            <SectorSummaryCards
+              summaries={sectorSummaries}
+              insights={weeklyInsights}
+            />
 
-      {/* Automated Weekly Insights & Comparison Section */}
-      <WeeklyInsightsSection
-        insights={weeklyInsights}
-        items={items}
-        logs={logs}
-        currentDate={currentDate}
-      />
+            <TodayCheckinSection
+              items={items}
+              logs={logs}
+              currentDate={currentDate}
+              onSaveLog={handleSaveLog}
+              onEditItem={handleOpenEditItem}
+              onDeleteItem={handleDeleteItem}
+              forcedSectorFilter="all"
+            />
+
+            <WeeklyInsightsSection
+              insights={weeklyInsights}
+              items={items}
+              logs={logs}
+              currentDate={currentDate}
+            />
+          </>
+        )}
+
+        {/* TAB 2: FITNESS */}
+        {activeTab === 'fitness' && (
+          <TodayCheckinSection
+            items={items}
+            logs={logs}
+            currentDate={currentDate}
+            onSaveLog={handleSaveLog}
+            onEditItem={handleOpenEditItem}
+            onDeleteItem={handleDeleteItem}
+            forcedSectorFilter="fitness"
+          />
+        )}
+
+        {/* TAB 3: GROWTH */}
+        {activeTab === 'growth' && (
+          <TodayCheckinSection
+            items={items}
+            logs={logs}
+            currentDate={currentDate}
+            onSaveLog={handleSaveLog}
+            onEditItem={handleOpenEditItem}
+            onDeleteItem={handleDeleteItem}
+            forcedSectorFilter="growth"
+          />
+        )}
+
+        {/* TAB 4: FINANCE */}
+        {activeTab === 'finance' && (
+          <TodayCheckinSection
+            items={items}
+            logs={logs}
+            currentDate={currentDate}
+            onSaveLog={handleSaveLog}
+            onEditItem={handleOpenEditItem}
+            onDeleteItem={handleDeleteItem}
+            forcedSectorFilter="finance"
+          />
+        )}
+
+        {/* TAB 5: PROFILE */}
+        {activeTab === 'profile' && (
+          <ProfilePage
+            user={user}
+            items={items}
+            logs={logs}
+            insights={weeklyInsights}
+            onDataImported={refreshData}
+          />
+        )}
+
+        {/* Footer */}
+        <footer style={{
+          textAlign: 'center',
+          marginTop: '40px',
+          paddingTop: '20px',
+          borderTop: '1px solid var(--border-subtle)',
+          fontSize: '0.8rem',
+          color: 'var(--text-dim)'
+        }}>
+          TrackU • Logged in as <strong>{user.name}</strong> • Permanent session active
+        </footer>
+      </main>
 
       {/* Item Configuration / Manager Modal */}
       <ItemConfigModal
@@ -165,17 +262,6 @@ export function App() {
         onDeleteLog={handleDeleteLog}
       />
 
-      {/* Footer */}
-      <footer style={{
-        textAlign: 'center',
-        marginTop: '40px',
-        paddingTop: '20px',
-        borderTop: '1px solid var(--border-subtle)',
-        fontSize: '0.8rem',
-        color: 'var(--text-dim)'
-      }}>
-        TrackU • 3-Sector Consistency, Goal & Expense Tracker • Data stored locally in browser
-      </footer>
     </div>
   );
 }
