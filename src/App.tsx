@@ -6,7 +6,8 @@ import {
   getStoredLogs,
   saveLogEntry,
   deleteTrackedItem,
-  deleteLogEntry
+  deleteLogEntry,
+  syncWithSupabaseCloud
 } from './utils/storage';
 import { getSectorSummaries, calculateWeeklyInsights, formatDateString } from './utils/analytics';
 import { Header } from './components/Header';
@@ -26,7 +27,7 @@ export function App() {
   const [itemToEdit, setItemToEdit] = useState<TrackedItem | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-  // Load initial items & logs from local storage
+  // Load initial items & logs from local storage & sync cloud
   const refreshData = () => {
     const loadedItems = getStoredItems();
     const loadedLogs = getStoredLogs();
@@ -36,6 +37,12 @@ export function App() {
 
   useEffect(() => {
     refreshData();
+    syncWithSupabaseCloud().then((synced) => {
+      if (synced) {
+        setItems(synced.items);
+        setLogs(synced.logs);
+      }
+    });
   }, []);
 
   // Save or update log entry

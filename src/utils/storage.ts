@@ -1,4 +1,13 @@
 import type { TrackedItem, LogEntry } from '../types/tracker';
+import {
+  isSupabaseConfigured,
+  fetchCloudItems,
+  fetchCloudLogs,
+  saveCloudItems,
+  saveCloudLog,
+  deleteCloudItem,
+  deleteCloudLog
+} from './supabase';
 
 const STORAGE_KEY_ITEMS = 'tracku_items_v1';
 const STORAGE_KEY_LOGS = 'tracku_logs_v1';
@@ -101,7 +110,6 @@ export const getStoredItems = (): TrackedItem[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_ITEMS);
     if (!raw) {
-      // Seed initial default items
       localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(DEFAULT_ITEMS));
       return DEFAULT_ITEMS;
     }
@@ -115,6 +123,9 @@ export const getStoredItems = (): TrackedItem[] => {
 export const saveStoredItems = (items: TrackedItem[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(items));
+    if (isSupabaseConfigured()) {
+      saveCloudItems(items);
+    }
   } catch (err) {
     console.error('Failed to save tracked items:', err);
   }
@@ -146,39 +157,82 @@ export const saveLogEntry = (entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntr
   );
 
   const timestamp = Date.now();
+  let updatedEntry: LogEntry;
+
   if (existingIndex >= 0) {
-    const updated: LogEntry = {
+    updatedEntry = {
       ...logs[existingIndex],
       ...entry,
       timestamp
     };
-    logs[existingIndex] = updated;
-    saveStoredLogs(logs);
-    return updated;
+    logs[existingIndex] = updatedEntry;
   } else {
-    const newEntry: LogEntry = {
+    updatedEntry = {
       ...entry,
       id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       timestamp
     };
-    logs.push(newEntry);
-    saveStoredLogs(logs);
-    return newEntry;
+    logs.push(updatedEntry);
   }
+
+  saveStoredLogs(logs);
+
+  if (isSupabaseConfigured()) {
+    saveCloudLog(updatedEntry);
+  }
+
+  return updatedEntry;
 };
 
 export const deleteLogEntry = (logId: string): void => {
   const logs = getStoredLogs().filter((l) => l.id !== logId);
   saveStoredLogs(logs);
+
+  if (isSupabaseConfigured()) {
+    deleteCloudLog(logId);
+  }
 };
 
 export const deleteTrackedItem = (itemId: string): void => {
   const items = getStoredItems().filter((i) => i.id !== itemId);
   saveStoredItems(items);
-  
-  // Clean up associated logs
+
   const logs = getStoredLogs().filter((l) => l.itemId !== itemId);
   saveStoredLogs(logs);
+
+  if (isSupabaseConfigured()) {
+    deleteCloudItem(itemId);
+  }
+};
+
+// Initial sync on app boot if Supabase is connected
+export const syncWithSupabaseCloud = async (): Promise<{ items: TrackedItem[]; logs: LogEntry[] } | null> => {
+  if (!isSupabaseConfigured()) return null;
+
+  try {
+    const cloudItems = await fetchCloudItems();
+    const cloudLogs = await fetchCloudLogs();
+
+    if (cloudItems && cloudItems.length > 0) {
+      localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(cloudItems));
+    } else {
+      // If cloud table is empty, seed initial items to Supabase
+      const localItems = getStoredItems();
+      saveCloudItems(localItems);
+    }
+
+    if (cloudLogs && cloudLogs.length > 0) {
+      localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(cloudLogs));
+    }
+
+    return {
+      items: getStoredItems(),
+      logs: getStoredLogs()
+    };
+  } catch (err) {
+    console.error('Supabase cloud sync failed:', err);
+    return null;
+  }
 };
 
 export const exportDataJSON = (): string => {
