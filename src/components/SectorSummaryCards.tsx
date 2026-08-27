@@ -46,7 +46,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         className="glass-panel clickable-card"
         onClick={() => onSelectSectorBreakdown?.('fitness')}
         style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
-        title="Click to view Fitness breakdown, times, dates & remarks"
+        title="Click to view full-page Fitness breakdown, items & dates"
       >
         <div style={{
           position: 'absolute',
@@ -88,7 +88,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#34d399', fontWeight: 600, gap: '4px' }}>
-          <Eye size={13} /> View Breakdown & History
+          <Eye size={13} /> View Full Fitness Page & Sort
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         className="glass-panel clickable-card"
         onClick={() => onSelectSectorBreakdown?.('growth')}
         style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
-        title="Click to view Growth breakdown, times, dates & remarks"
+        title="Click to view full-page Growth breakdown, items & dates"
       >
         <div style={{
           position: 'absolute',
@@ -139,7 +139,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#a78bfa', fontWeight: 600, gap: '4px' }}>
-          <Eye size={13} /> View Breakdown & History
+          <Eye size={13} /> View Full Growth Page & Sort
         </div>
       </div>
 
@@ -148,7 +148,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         className="glass-panel clickable-card"
         onClick={() => onSelectSectorBreakdown?.('finance')}
         style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
-        title="Click to view Financial breakdown, times, dates & remarks"
+        title="Click to view full-page Finance breakdown, items & dates"
       >
         <div style={{
           position: 'absolute',
@@ -190,7 +190,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600, gap: '4px' }}>
-          <Eye size={13} /> View Breakdown & History
+          <Eye size={13} /> View Full Finance Page & Sort
         </div>
       </div>
     </div>

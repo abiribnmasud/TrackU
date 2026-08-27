@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { TrackedItem, LogEntry, SectorType } from './types/tracker';
+import type { TrackedItem, LogEntry } from './types/tracker';
 import {
   getStoredItems,
   saveStoredItems,
@@ -22,7 +22,7 @@ import { WeeklyInsightsSection } from './components/WeeklyInsightsSection';
 import { ItemConfigModal } from './components/ItemConfigModal';
 import { HistoryLogModal } from './components/HistoryLogModal';
 import { ProfilePage } from './components/ProfilePage';
-import { SectorBreakdownModal } from './components/SectorBreakdownModal';
+import { SectorFullPageView } from './components/SectorFullPageView';
 
 export function App() {
   const [user, setUser] = useState<UserSession | null>(getCurrentUser());
@@ -37,7 +37,6 @@ export function App() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<TrackedItem | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [selectedBreakdownSector, setSelectedBreakdownSector] = useState<SectorType | null>(null);
 
   // Load items & logs from storage & sync Supabase cloud
   const refreshData = () => {
@@ -162,7 +161,7 @@ export function App() {
             <SectorSummaryCards
               summaries={sectorSummaries}
               insights={weeklyInsights}
-              onSelectSectorBreakdown={(sector) => setSelectedBreakdownSector(sector)}
+              onSelectSectorBreakdown={(sector) => setActiveTab(sector as NavTab)}
             />
 
             <TodayCheckinSection
@@ -184,42 +183,42 @@ export function App() {
           </>
         )}
 
-        {/* TAB 2: FITNESS */}
+        {/* TAB 2: FITNESS FULL PAGE VIEW */}
         {activeTab === 'fitness' && (
-          <TodayCheckinSection
+          <SectorFullPageView
+            sector="fitness"
             items={items}
             logs={logs}
             currentDate={currentDate}
             onSaveLog={handleSaveLog}
             onEditItem={handleOpenEditItem}
             onDeleteItem={handleDeleteItem}
-            forcedSectorFilter="fitness"
           />
         )}
 
-        {/* TAB 3: GROWTH */}
+        {/* TAB 3: GROWTH FULL PAGE VIEW */}
         {activeTab === 'growth' && (
-          <TodayCheckinSection
+          <SectorFullPageView
+            sector="growth"
             items={items}
             logs={logs}
             currentDate={currentDate}
             onSaveLog={handleSaveLog}
             onEditItem={handleOpenEditItem}
             onDeleteItem={handleDeleteItem}
-            forcedSectorFilter="growth"
           />
         )}
 
-        {/* TAB 4: FINANCE */}
+        {/* TAB 4: FINANCE FULL PAGE VIEW */}
         {activeTab === 'finance' && (
-          <TodayCheckinSection
+          <SectorFullPageView
+            sector="finance"
             items={items}
             logs={logs}
             currentDate={currentDate}
             onSaveLog={handleSaveLog}
             onEditItem={handleOpenEditItem}
             onDeleteItem={handleDeleteItem}
-            forcedSectorFilter="finance"
           />
         )}
 
@@ -267,15 +266,6 @@ export function App() {
         logs={logs}
         items={items}
         onDeleteLog={handleDeleteLog}
-      />
-
-      {/* Interactive Sector Breakdown Modal */}
-      <SectorBreakdownModal
-        isOpen={Boolean(selectedBreakdownSector)}
-        onClose={() => setSelectedBreakdownSector(null)}
-        sector={selectedBreakdownSector}
-        items={items}
-        logs={logs}
       />
 
     </div>
