@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { Dumbbell, Sprout, DollarSign, Calendar, Clock, MessageSquare, ArrowUpDown, Filter, Check, Edit3, Trash2, Save, Award, Layers } from 'lucide-react';
+import { Dumbbell, Sprout, DollarSign, Calendar, Clock, MessageSquare, ArrowUpDown, Filter, Check, X, Edit3, Trash2, Save, Award, Layers } from 'lucide-react';
 import type { SectorType, TrackedItem, LogEntry } from '../types/tracker';
 
 interface SectorFullPageViewProps {
@@ -48,6 +48,11 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
       spread: 60,
       origin: { y: 0.7 }
     });
+  };
+
+  const formatTimestampTime = (timestamp: number): string => {
+    if (!timestamp) return '12:00 PM';
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const handleUpdateItem = (item: TrackedItem) => {
@@ -121,11 +126,6 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
     if (sector === 'fitness') return <Dumbbell size={24} color="#34d399" />;
     if (sector === 'growth') return <Sprout size={24} color="#a78bfa" />;
     return <DollarSign size={24} color="#fbbf24" />;
-  };
-
-  const formatTimestampTime = (timestamp: number): string => {
-    if (!timestamp) return '';
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -227,10 +227,10 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
         </div>
       </div>
 
-      {/* Tracked Items & Check-in Section */}
+      {/* Tracked Items Cards Matching Demo Layout */}
       <div>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px' }}>
-          {sector.toUpperCase()} Tracked Items & Today's Check-in
+          {sector.toUpperCase()} Item-Wise Cards & Today's Check-in
         </h2>
 
         {sectorItems.length === 0 ? (
@@ -242,7 +242,12 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
             {sectorItems.map((item) => {
               const currentLog = logsMap.get(item.id);
               const loggedVal = currentLog ? currentLog.value : 0;
-              const loggedRemark = currentLog?.remark || '';
+
+              // Recent history entries for this specific item (up to 5 entries)
+              const itemHistoryLogs = logs
+                .filter((l) => l.itemId === item.id)
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 5);
 
               const hasDraft = draftValues[item.id] !== undefined;
               const displayVal = hasDraft ? draftValues[item.id] : '';
@@ -255,73 +260,113 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                   key={item.id}
                   className="glass-panel"
                   style={{
-                    padding: '20px',
+                    padding: '22px 20px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    gap: '14px',
+                    gap: '16px',
                     borderColor: isJustUpdated ? '#10b981' : undefined,
                     boxShadow: isJustUpdated ? '0 0 15px rgba(16, 185, 129, 0.3)' : undefined
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '4px' }}>
+                  {/* Header: Title & Badges */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
                         {item.title}
                       </h3>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
-                          {item.period} • {item.type}
-                        </span>
-                        {item.unit && (
-                          <span style={{ fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)' }}>
-                            Target: {item.targetValue} {item.unit}
-                          </span>
-                        )}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button onClick={() => onEditItem(item)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }} title="Edit Item">
+                          <Edit3 size={17} />
+                        </button>
+                        <button onClick={() => onDeleteItem(item.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }} title="Delete Item">
+                          <Trash2 size={17} />
+                        </button>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button onClick={() => onEditItem(item)} style={{ background: 'transparent', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '4px' }} title="Edit Item">
-                        <Edit3 size={15} />
-                      </button>
-                      <button onClick={() => onDeleteItem(item.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(239, 68, 68, 0.7)', cursor: 'pointer', padding: '4px' }} title="Delete Item">
-                        <Trash2 size={15} />
-                      </button>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.7rem', background: 'rgba(255, 255, 255, 0.07)', border: '1px solid var(--border-subtle)', padding: '4px 10px', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
+                        {item.period} • {item.type}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', background: 'rgba(255, 255, 255, 0.07)', border: '1px solid var(--border-subtle)', padding: '4px 10px', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        Target: {item.targetValue ? `${item.targetValue} ${item.unit || ''}` : item.unit || 'BDT'}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Input controls */}
+                  {/* Middle History Logs Section matching demo layout */}
+                  {itemHistoryLogs.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      padding: '10px 0',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}>
+                      {itemHistoryLogs.map((log) => (
+                        <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 800, color: item.sector === 'finance' ? '#fbbf24' : '#34d399', letterSpacing: '0.3px' }}>
+                              {item.inputType === 'percentage'
+                                ? `${log.value}%`
+                                : item.inputType === 'number'
+                                ? `${log.value} ${item.unit || 'BDT'}`
+                                : log.value === true ? 'Completed' : String(log.value)}
+                            </span>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                              <span>{log.date}</span>
+                              <span style={{ minWidth: '65px', textAlign: 'right' }}>{formatTimestampTime(log.timestamp)}</span>
+                            </div>
+                          </div>
+                          {log.remark && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <MessageSquare size={11} color="var(--text-dim)" />
+                              <span>"{log.remark}"</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Input controls & Update button */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      Currently logged: <strong style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 800 }}>
+                        {item.inputType === 'percentage'
+                          ? `${pctVal}%`
+                          : item.inputType === 'number'
+                          ? `${loggedVal} ${item.unit || 'BDT'}`
+                          : loggedVal === true ? 'Completed' : String(loggedVal || 'None')}
+                      </strong>
+                    </div>
+
                     {item.inputType === 'percentage' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                            Current: <strong>{pctVal}%</strong>
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '110px' }}>
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={displayVal}
-                              onChange={(e) => {
-                                const num = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                                setDraftValues((prev) => ({ ...prev, [item.id]: num }));
-                              }}
-                              className="input-field"
-                              style={{ padding: '4px 8px', textAlign: 'center', fontWeight: 700 }}
-                              placeholder="New %"
-                            />
-                            <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>%</span>
-                          </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={displayVal}
+                            onChange={(e) => {
+                              const num = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                              setDraftValues((prev) => ({ ...prev, [item.id]: num }));
+                            }}
+                            className="input-field"
+                            style={{ flex: 1 }}
+                            placeholder="Enter percentage..."
+                          />
+                          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)' }}>%</span>
                         </div>
 
                         <div className="progress-container">
                           <div className={`progress-bar-fill ${item.sector}`} style={{ width: `${Math.min(100, Math.max(0, pctVal))}%` }} />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', marginTop: '2px' }}>
                           {[25, 50, 75, 100].map((preset) => (
                             <button
                               key={preset}
@@ -337,76 +382,61 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                     )}
 
                     {item.inputType === 'number' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                          Currently logged: <strong>{loggedVal} {item.unit || ''}</strong>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <input
-                            type="number"
-                            value={displayVal}
-                            onChange={(e) => setDraftValues((prev) => ({ ...prev, [item.id]: Number(e.target.value) || 0 }))}
-                            className="input-field"
-                            placeholder="Enter amount to update..."
-                          />
-                          {item.unit && (
-                            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                              {item.unit}
-                            </span>
-                          )}
-                        </div>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="number"
+                          value={displayVal}
+                          onChange={(e) => setDraftValues((prev) => ({ ...prev, [item.id]: Number(e.target.value) || 0 }))}
+                          className="input-field"
+                          placeholder="Enter amount to update..."
+                          style={{ paddingRight: item.unit ? '55px' : '14px' }}
+                        />
+                        {item.unit && (
+                          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-muted)', pointerEvents: 'none' }}>
+                            {item.unit}
+                          </span>
+                        )}
                       </div>
                     )}
 
                     {item.inputType === 'boolean' && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                          Status: <strong>{loggedVal === true ? 'Completed' : 'Pending'}</strong>
-                        </span>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: true }))}
-                            className={(hasDraft ? displayVal === true : loggedVal === true) ? 'btn-primary' : 'btn-secondary'}
-                            style={{ padding: '6px 14px' }}
-                          >
-                            <Check size={14} /> Completed
-                          </button>
-                          <button
-                            onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: false }))}
-                            className={(hasDraft ? displayVal === false : loggedVal === false) ? 'btn-danger' : 'btn-secondary'}
-                            style={{ padding: '6px 14px' }}
-                          >
-                            Pending
-                          </button>
-                        </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: true }))}
+                          className={(hasDraft ? displayVal === true : loggedVal === true) ? 'btn-primary' : 'btn-secondary'}
+                          style={{ flex: 1, padding: '8px 14px' }}
+                        >
+                          <Check size={14} /> Completed
+                        </button>
+                        <button
+                          onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: false }))}
+                          className={(hasDraft ? displayVal === false : loggedVal === false) ? 'btn-danger' : 'btn-secondary'}
+                          style={{ flex: 1, padding: '8px 14px' }}
+                        >
+                          <X size={14} /> Pending
+                        </button>
                       </div>
                     )}
 
                     {item.addRemark && (
-                      <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed var(--border-subtle)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                          <MessageSquare size={13} color="var(--text-dim)" />
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 500 }}>
-                            Remarks {loggedRemark ? `(Current: "${loggedRemark}")` : ''}:
-                          </span>
-                        </div>
+                      <div>
                         <input
                           type="text"
                           value={displayRemark}
                           onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
                           className="input-field"
-                          style={{ fontSize: '0.82rem', padding: '6px 10px' }}
-                          placeholder="Add new notes or remark..."
+                          style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+                          placeholder="Add optional notes or remarks..."
                         />
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
-                      <span style={{ fontSize: '0.72rem', color: isJustUpdated ? '#34d399' : 'var(--text-dim)', fontWeight: 600 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                      <span style={{ fontSize: '0.78rem', color: isJustUpdated ? '#34d399' : 'var(--text-dim)', fontWeight: 600 }}>
                         {isJustUpdated ? '✓ Updated & Reset!' : 'Ready for input'}
                       </span>
-                      <button onClick={() => handleUpdateItem(item)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.82rem' }}>
-                        <Save size={14} /> Update Value
+                      <button onClick={() => handleUpdateItem(item)} className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.88rem' }}>
+                        <Save size={16} /> Update Value
                       </button>
                     </div>
 
