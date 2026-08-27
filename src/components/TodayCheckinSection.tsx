@@ -388,7 +388,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                         onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         className="input-field"
                         style={{ fontSize: '0.82rem', padding: '6px 12px' }}
-                        placeholder="Add remark (e.g. Insaf Super shop)..."
+                        placeholder="Add optional notes or remarks..."
                       />
                     </div>
 
