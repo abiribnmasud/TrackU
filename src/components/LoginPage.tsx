@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Activity, Lock, User, LogIn, Key, ShieldCheck } from 'lucide-react';
-import { loginUser, DEFAULT_USER } from '../utils/auth';
+import { Activity, Lock, User, LogIn, ShieldCheck } from 'lucide-react';
+import { loginUser } from '../utils/auth';
 import type { UserSession } from '../utils/auth';
 
 interface LoginPageProps {
@@ -24,11 +24,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleFillDemo = () => {
-    setUsername(DEFAULT_USER.username);
-    setPassword(DEFAULT_USER.password);
-    setErrorMsg('');
-  };
+
 
   return (
     <div style={{
@@ -47,7 +43,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
         position: 'relative'
       }}>
-        
+
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{
@@ -69,32 +65,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             3-Sector Consistency, Goal & Expense Tracker
           </p>
-        </div>
-
-        {/* Demo Fill Helper Pill */}
-        <div style={{
-          marginBottom: '20px',
-          background: 'rgba(139, 92, 246, 0.12)',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          borderRadius: 'var(--radius-md)',
-          padding: '10px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '0.82rem'
-        }}>
-          <div>
-            <div style={{ fontWeight: 600, color: '#a78bfa' }}>Default Account</div>
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.78rem' }}>User: <strong>Abir</strong> • Pass: <strong>095161251</strong></div>
-          </div>
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(139, 92, 246, 0.25)', borderColor: '#8b5cf6' }}
-          >
-            <Key size={12} /> Auto Fill
-          </button>
         </div>
 
         {/* Error Notification */}
