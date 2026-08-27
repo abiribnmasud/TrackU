@@ -38,9 +38,12 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
   sectorItems.forEach((i) => itemsMap.set(i.id, i));
 
   const logsMap = new Map<string, LogEntry>();
-  logs.filter((l) => l.date === currentDate).forEach((l) => {
-    logsMap.set(l.itemId, l);
-  });
+  logs
+    .filter((l) => l.date === currentDate)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .forEach((l) => {
+      logsMap.set(l.itemId, l);
+    });
 
   const fireConfetti = () => {
     confetti({
@@ -295,7 +298,7 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Middle History Logs Section matching demo layout */}
+                  {/* Middle History Logs Section */}
                   {itemHistoryLogs.length > 0 && (
                     <div style={{
                       display: 'flex',
@@ -321,9 +324,19 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                             </div>
                           </div>
                           {log.remark && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <MessageSquare size={11} color="var(--text-dim)" />
-                              <span>"{log.remark}"</span>
+                            <div style={{
+                              fontSize: '0.78rem',
+                              color: '#a78bfa',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              paddingLeft: '4px',
+                              borderLeft: '2px solid #8b5cf6',
+                              marginTop: '2px'
+                            }}>
+                              <MessageSquare size={11} color="#a78bfa" />
+                              <span>Remark: "{log.remark}"</span>
                             </div>
                           )}
                         </div>
@@ -400,7 +413,7 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                     )}
 
                     {item.inputType === 'boolean' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
                         <button
                           onClick={() => setDraftValues((prev) => ({ ...prev, [item.id]: true }))}
                           className={(hasDraft ? displayVal === true : loggedVal === true) ? 'btn-primary' : 'btn-secondary'}
@@ -418,18 +431,17 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                       </div>
                     )}
 
-                    {item.addRemark && (
-                      <div>
-                        <input
-                          type="text"
-                          value={displayRemark}
-                          onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          className="input-field"
-                          style={{ fontSize: '0.82rem', padding: '6px 12px' }}
-                          placeholder="Add optional notes or remarks..."
-                        />
-                      </div>
-                    )}
+                    {/* ALWAYS ENABLED REMARKS INPUT */}
+                    <div>
+                      <input
+                        type="text"
+                        value={displayRemark}
+                        onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        className="input-field"
+                        style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+                        placeholder="Add remark (e.g. Insaf Super shop)..."
+                      />
+                    </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                       <span style={{ fontSize: '0.78rem', color: isJustUpdated ? '#34d399' : 'var(--text-dim)', fontWeight: 600 }}>
@@ -519,9 +531,9 @@ export const SectorFullPageView: React.FC<SectorFullPageViewProps> = ({
                     </div>
 
                     {log.remark && (
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#a78bfa', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <MessageSquare size={12} color="#a78bfa" />
-                        <em>Remark: "{log.remark}"</em>
+                        <span>Remark: "{log.remark}"</span>
                       </div>
                     )}
                   </div>

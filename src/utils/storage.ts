@@ -152,29 +152,15 @@ export const saveStoredLogs = (logs: LogEntry[]): void => {
 
 export const saveLogEntry = (entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry => {
   const logs = getStoredLogs();
-  const existingIndex = logs.findIndex(
-    (l) => l.itemId === entry.itemId && l.date === entry.date
-  );
-
   const timestamp = Date.now();
-  let updatedEntry: LogEntry;
 
-  if (existingIndex >= 0) {
-    updatedEntry = {
-      ...logs[existingIndex],
-      ...entry,
-      timestamp
-    };
-    logs[existingIndex] = updatedEntry;
-  } else {
-    updatedEntry = {
-      ...entry,
-      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      timestamp
-    };
-    logs.push(updatedEntry);
-  }
+  const updatedEntry: LogEntry = {
+    ...entry,
+    id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    timestamp
+  };
 
+  logs.push(updatedEntry);
   saveStoredLogs(logs);
 
   if (isSupabaseConfigured()) {

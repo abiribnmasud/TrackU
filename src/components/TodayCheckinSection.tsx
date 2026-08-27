@@ -33,10 +33,14 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
 
   const effectiveFilter = forcedSectorFilter || activeSectorFilter;
 
+  // Map latest log per item for currentDate (sorted by timestamp descending)
   const logsMap = new Map<string, LogEntry>();
-  logs.filter((l) => l.date === currentDate).forEach((l) => {
-    logsMap.set(l.itemId, l);
-  });
+  logs
+    .filter((l) => l.date === currentDate)
+    .sort((a, b) => a.timestamp - b.timestamp) // oldest to newest so newest set last
+    .forEach((l) => {
+      logsMap.set(l.itemId, l);
+    });
 
   const fireConfetti = () => {
     confetti({
@@ -144,7 +148,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     transition: 'var(--transition-smooth)'
                   }}
                 >
-                  {/* Demo Layout Header: Title & Action Badges */}
+                  {/* Card Header */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
@@ -197,7 +201,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     </div>
                   </div>
 
-                  {/* Demo Layout Middle Section: Inline Log History Entries */}
+                  {/* Middle History Logs Section */}
                   {itemHistoryLogs.length > 0 && (
                     <div style={{
                       display: 'flex',
@@ -235,11 +239,21 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                             </div>
                           </div>
 
-                          {/* Optional Remark line */}
+                          {/* Display Remark Note when present */}
                           {log.remark && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <MessageSquare size={11} color="var(--text-dim)" />
-                              <span>"{log.remark}"</span>
+                            <div style={{
+                              fontSize: '0.78rem',
+                              color: '#a78bfa',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              paddingLeft: '4px',
+                              borderLeft: '2px solid #8b5cf6',
+                              marginTop: '2px'
+                            }}>
+                              <MessageSquare size={11} color="#a78bfa" />
+                              <span>Remark: "{log.remark}"</span>
                             </div>
                           )}
                         </div>
@@ -247,7 +261,7 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                     </div>
                   )}
 
-                  {/* Demo Layout Bottom Section: Input Controls & Update Button */}
+                  {/* Bottom Section: Input Controls & Update Button */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     
                     {/* Currently Logged Text */}
@@ -366,21 +380,19 @@ export const TodayCheckinSection: React.FC<TodayCheckinSectionProps> = ({
                       </div>
                     )}
 
-                    {/* CONDITIONAL REMARKS INPUT */}
-                    {item.addRemark && (
-                      <div>
-                        <input
-                          type="text"
-                          value={displayRemark}
-                          onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          className="input-field"
-                          style={{ fontSize: '0.82rem', padding: '6px 12px' }}
-                          placeholder="Add optional notes or remarks..."
-                        />
-                      </div>
-                    )}
+                    {/* ALWAYS ENABLED REMARKS INPUT */}
+                    <div>
+                      <input
+                        type="text"
+                        value={displayRemark}
+                        onChange={(e) => setDraftRemarks((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        className="input-field"
+                        style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+                        placeholder="Add remark (e.g. Insaf Super shop)..."
+                      />
+                    </div>
 
-                    {/* Bottom Footer Row matching demo layout */}
+                    {/* Bottom Footer Row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                       <span style={{ fontSize: '0.78rem', color: isJustUpdated ? '#34d399' : 'var(--text-dim)', fontWeight: 600 }}>
                         {isJustUpdated ? '✓ Updated & Reset!' : 'Ready for input'}
