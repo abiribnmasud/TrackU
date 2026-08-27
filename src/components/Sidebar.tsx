@@ -188,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* DESKTOP SIDEBAR */}
+      {/* SINGLE DESKTOP SIDEBAR */}
       <aside className="glass-panel sidebar-desktop" style={{
         width: '260px',
         minHeight: 'calc(100vh - 48px)',
@@ -202,13 +202,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {renderContent()}
       </aside>
 
-      {/* MOBILE DRAWER OVERLAY */}
+      {/* MOBILE DRAWER OVERLAY (Strictly rendered when open) */}
       {isOpenMobile && (
-        <div className="mobile-drawer-backdrop" onClick={onCloseMobile} />
+        <>
+          <div className="mobile-drawer-backdrop" onClick={onCloseMobile} />
+          <div className="mobile-drawer open">
+            {renderContent()}
+          </div>
+        </>
       )}
-      <div className={`mobile-drawer ${isOpenMobile ? 'open' : ''}`}>
-        {renderContent()}
-      </div>
     </>
   );
 };

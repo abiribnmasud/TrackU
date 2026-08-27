@@ -1,13 +1,18 @@
 import React from 'react';
-import { Dumbbell, Sprout, DollarSign, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import type { SectorAnalytics, WeeklyInsightSummary } from '../types/tracker';
+import { Dumbbell, Sprout, DollarSign, TrendingUp, TrendingDown, Minus, Eye } from 'lucide-react';
+import type { SectorAnalytics, WeeklyInsightSummary, SectorType } from '../types/tracker';
 
 interface SectorSummaryCardsProps {
-  summaries: Record<'fitness' | 'growth' | 'finance', SectorAnalytics>;
+  summaries: Record<SectorType, SectorAnalytics>;
   insights: WeeklyInsightSummary;
+  onSelectSectorBreakdown?: (sector: SectorType) => void;
 }
 
-export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summaries, insights }) => {
+export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({
+  summaries,
+  insights,
+  onSelectSectorBreakdown
+}) => {
   const renderComparisonBadge = (diffPct: number, isExpense = false) => {
     if (diffPct === 0) {
       return (
@@ -37,7 +42,12 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
       marginBottom: '24px'
     }}>
       {/* Fitness Card */}
-      <div className="glass-panel" style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}>
+      <div
+        className="glass-panel clickable-card"
+        onClick={() => onSelectSectorBreakdown?.('fitness')}
+        style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
+        title="Click to view Fitness breakdown, times, dates & remarks"
+      >
         <div style={{
           position: 'absolute',
           top: '-20px',
@@ -64,7 +74,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>mins this week</span>
         </div>
 
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
             <span>Today's Completion</span>
             <span>{summaries.fitness.completedItemsToday} / {summaries.fitness.totalItems} items ({summaries.fitness.completionPercentageToday}%)</span>
@@ -76,10 +86,19 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
             />
           </div>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#34d399', fontWeight: 600, gap: '4px' }}>
+          <Eye size={13} /> View Breakdown & History
+        </div>
       </div>
 
       {/* Growth Card */}
-      <div className="glass-panel" style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}>
+      <div
+        className="glass-panel clickable-card"
+        onClick={() => onSelectSectorBreakdown?.('growth')}
+        style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
+        title="Click to view Growth breakdown, times, dates & remarks"
+      >
         <div style={{
           position: 'absolute',
           top: '-20px',
@@ -106,7 +125,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>hrs practice/study</span>
         </div>
 
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
             <span>Today's Completion</span>
             <span>{summaries.growth.completedItemsToday} / {summaries.growth.totalItems} items ({summaries.growth.completionPercentageToday}%)</span>
@@ -118,10 +137,19 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
             />
           </div>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#a78bfa', fontWeight: 600, gap: '4px' }}>
+          <Eye size={13} /> View Breakdown & History
+        </div>
       </div>
 
       {/* Finance Card */}
-      <div className="glass-panel" style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}>
+      <div
+        className="glass-panel clickable-card"
+        onClick={() => onSelectSectorBreakdown?.('finance')}
+        style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}
+        title="Click to view Financial breakdown, times, dates & remarks"
+      >
         <div style={{
           position: 'absolute',
           top: '-20px',
@@ -148,7 +176,7 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>expenses this week</span>
         </div>
 
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
             <span>Today's Completion</span>
             <span>{summaries.finance.completedItemsToday} / {summaries.finance.totalItems} items ({summaries.finance.completionPercentageToday}%)</span>
@@ -159,6 +187,10 @@ export const SectorSummaryCards: React.FC<SectorSummaryCardsProps> = ({ summarie
               style={{ width: `${summaries.finance.completionPercentageToday}%` }}
             />
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600, gap: '4px' }}>
+          <Eye size={13} /> View Breakdown & History
         </div>
       </div>
     </div>
